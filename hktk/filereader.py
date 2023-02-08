@@ -1,7 +1,35 @@
 from hktk.fileutil import is_xml, convert_to_pathlib
 from xml.etree import ElementTree as ET
-from typing import (Union, Iterator)
+from typing import (Union, Optional, Iterator)
 from pathlib import Path
+from dataclasses import dataclass, field
+from datetime import datetime
+
+
+@dataclass
+class Record:
+    type: str = field()
+    value: str = field()
+    unit: str = field()
+    creationDate: str = field()
+    startDate: str = field()
+    endDate: str = field()
+    sourceName: str = field(repr=False)
+    sourceVersion: str = field(repr=False)
+    device: str = field(repr=False)
+    metadata: Optional[list[ET.Element]] = field(default=None, repr=False)
+
+    @property
+    def creation_datetime(self) -> datetime:
+        return XMLLoader.datetime_from_hk_string(self.creationDate)
+
+    @property
+    def start_datetime(self) -> datetime:
+        return XMLLoader.datetime_from_hk_string(self.startDate)
+
+    @property
+    def end_datetime(self) -> datetime:
+        return XMLLoader.datetime_from_hk_string(self.endDate)
 
 
 class XMLLoader:
@@ -41,11 +69,15 @@ class XMLLoader:
             etree = ET.parse(file)
             yield file, etree.iterfind(tag)
 
-    def get_all_records_by_type(self, record_type: str) -> Union[list[ET.Element], dict[Path, list[ET.Element]]]:
+    def get_all_records_by_type(self, record_type: str) -> Union[list[Record], dict[Path, list[Record]]]:
         type_records = dict()
         for file, all_records in self.get_iterator_by_tag('Record'):
             records = filter(lambda record: record.get('type') == record_type, all_records)
-            type_records[file] = list(records)
+            type_records[file] = [Record(**record.attrib, metadata=record.findall('./')) for record in records]
         if len(self.files) == 1:
             return type_records[self.files[0]]
         return type_records
+
+    @staticmethod
+    def datetime_from_hk_string(datetime_string: str) -> datetime:
+        return datetime.strptime(datetime_string, '%Y-%m-%d %H:%M:%S %z')
