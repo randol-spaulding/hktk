@@ -36,7 +36,7 @@ class XMLLoader:
             return record_types[self.files[0]]
         return record_types
 
-    def get_iterator_by_tag(self, tag: str) -> Iterator[tuple[Path, ]]:
+    def get_iterator_by_tag(self, tag: str) -> Iterator[tuple[Path, Iterator]]:
         for file in self.files:
             etree = ET.parse(file)
             yield file, etree.iterfind(tag)
