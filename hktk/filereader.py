@@ -54,15 +54,18 @@ class XMLLoader:
             return tags[self.files[0]]
         return tags
 
-    def get_record_type_summary(self) -> Union[set[str], dict[Path, set[str]]]:
-        record_types = dict()
-        for file, records in self.get_iterator_by_tag('Record'):
-            record_types[file] = set()
+    def get_tag_type_summary(self, tag_name: str) -> Union[set[str], dict[Path, set[str]]]:
+        tag_types = dict()
+        for file, records in self.get_iterator_by_tag(tag_name):
+            tag_types[file] = set()
             for record in records:
-                record_types[file].add(record.get('type'))
+                tag_types[file].add(record.get('type'))
         if len(self.files) == 1:
-            return record_types[self.files[0]]
-        return record_types
+            return tag_types[self.files[0]]
+        return tag_types
+
+    def get_record_type_summary(self) -> Union[set[str], dict[Path, set[str]]]:
+        return self.get_tag_type_summary(tag_name='Record')
 
     def get_iterator_by_tag(self, tag: str) -> Iterator[tuple[Path, Iterator]]:
         for file in self.files:
