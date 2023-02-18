@@ -40,7 +40,7 @@ class XMLLoader:
         fp = convert_to_pathlib(fp)
         self.files = []
         if fp.is_dir():
-            self.files = [file for file in fp.iterdir() if is_xml(file)]
+            self.files = [file for file in fp.iterdir() if is_xml(file) and file.exists()]
         else:
             self.files = [fp]
 
