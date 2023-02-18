@@ -72,6 +72,11 @@ class XMLLoader:
             etree = ET.parse(file)
             yield file, etree.iterfind(tag)
 
+    def iter_all_records(self) -> Iterator[tuple[Path, Record]]:
+        for file, all_records in self.get_iterator_by_tag('Record'):
+            for record in all_records:
+                yield file, Record(**record.attrib, metadata=record.findall('./'))
+
     def get_all_records_by_type(self, record_type: str) -> Union[list[Record], dict[Path, list[Record]]]:
         type_records = dict()
         for file, all_records in self.get_iterator_by_tag('Record'):
