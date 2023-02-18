@@ -12,4 +12,7 @@ def is_xml(fp: Union[str, Path]) -> bool:
 
 
 def convert_to_pathlib(fp: str) -> Path:
-    return Path(fp)
+    p = Path(fp)
+    if '~' in fp:
+        p = p.expanduser()
+    return p
