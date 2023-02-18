@@ -9,14 +9,14 @@ from datetime import datetime
 @dataclass
 class Record:
     type: str = field()
-    value: str = field()
-    unit: str = field()
     creationDate: str = field()
     startDate: str = field()
     endDate: str = field()
     sourceName: str = field(repr=False)
     sourceVersion: str = field(repr=False)
-    device: str = field(repr=False)
+    value: str = field(default=None)
+    unit: str = field(default=None, repr=False)
+    device: str = field(default=None, repr=False)
     metadata: Optional[list[ET.Element]] = field(default=None, repr=False)
 
     @property
