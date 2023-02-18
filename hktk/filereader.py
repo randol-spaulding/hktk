@@ -1,5 +1,5 @@
 from hktk.fileutil import is_xml, convert_to_pathlib
-from xml.etree import ElementTree as ET
+from lxml import etree as ET
 from typing import (Union, Optional, Iterator)
 from pathlib import Path
 from dataclasses import dataclass, field
@@ -17,7 +17,7 @@ class XMLRecord:
     value: str = field(default=None)
     unit: str = field(default=None, repr=False)
     device: str = field(default=None, repr=False)
-    metadata: Optional[list[ET.Element]] = field(default=None, repr=False)
+    metadata: Optional[list[ET._Element]] = field(default=None, repr=False)
 
     @property
     def creation_datetime(self) -> datetime:
