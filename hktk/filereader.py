@@ -7,7 +7,7 @@ from datetime import datetime
 
 
 @dataclass
-class Record:
+class XMLRecord:
     type: str = field()
     creationDate: str = field()
     startDate: str = field()
@@ -72,16 +72,16 @@ class XMLLoader:
             etree = ET.parse(file)
             yield file, etree.iterfind(tag)
 
-    def iter_all_records(self) -> Iterator[tuple[Path, Record]]:
+    def iter_all_records(self) -> Iterator[tuple[Path, XMLRecord]]:
         for file, all_records in self.get_iterator_by_tag('Record'):
             for record in all_records:
-                yield file, Record(**record.attrib, metadata=record.findall('./'))
+                yield file, XMLRecord(**record.attrib, metadata=record.findall('./'))
 
-    def get_all_records_by_type(self, record_type: str) -> Union[list[Record], dict[Path, list[Record]]]:
+    def get_all_records_by_type(self, record_type: str) -> Union[list[XMLRecord], dict[Path, list[XMLRecord]]]:
         type_records = dict()
         for file, all_records in self.get_iterator_by_tag('Record'):
             records = filter(lambda record: record.get('type') == record_type, all_records)
-            type_records[file] = [Record(**record.attrib, metadata=record.findall('./')) for record in records]
+            type_records[file] = [XMLRecord(**record.attrib, metadata=record.findall('./')) for record in records]
         if len(self.files) == 1:
             return type_records[self.files[0]]
         return type_records
