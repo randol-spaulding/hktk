@@ -10,9 +10,9 @@ class Record:
     creationDate: datetime = field()
     startDate: datetime = field()
     endDate: datetime = field()
-    value: Union[str, None] = field()
-    sourceName: str = field(repr=False)
-    sourceVersion: str = field(repr=False)
+    value: Union[str, None] = field(default=None)
+    sourceName: str = field(repr=False, default=None)
+    sourceVersion: str = field(repr=False, default=None)
     unit: str = field(default=None, repr=False)
     device: str = field(default=None, repr=False)
 
