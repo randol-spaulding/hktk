@@ -21,14 +21,14 @@ class RecordList(UserList, List[Record]):
 
     def __getitem__(self, item: Union[int, slice]):
         if isinstance(item, int):
-            return self[item]
+            return super().__getitem__(item)
         elif isinstance(item, slice):
             if isinstance(item.start, datetime) and isinstance(item.stop, datetime):
-                def filter_fn(record: Record):
+                def filter_fn(record: Record) -> bool:
                     return any(item.start <= dt <= item.stop for dt in [record.startDate, record.endDate, record.creationDate])
                 return self.filter(filter_fn)
             else:
-                return self[item]
+                return super().__getitem__(item)
         else:
             raise KeyError(f'Invalid key "{item}" with type "{type(item)}"')
 
