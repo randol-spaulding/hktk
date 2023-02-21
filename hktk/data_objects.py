@@ -43,9 +43,21 @@ class RecordList(UserList, List[Record]):
     def sort_by_date(self, date_type: Literal['startDate', 'endDate', 'creationDate'] = 'startDate'):
         self.sort(key=lambda record: getattr(record, date_type))
 
-    def filter(self, func: Callable[[any], bool]) -> 'RecordList':
-        filtered_list = RecordList()
+    def filter(self: RecordListType, func: Callable[[any], bool]) -> RecordListType:
+        filtered_list = type(self)()
         for item in self:
             if func(item):
                 filtered_list.append(item)
         return filtered_list
+
+    def split_by_types(self: RecordListType) -> dict[str, RecordListType]:
+        ret = defaultdict(type(self))
+        for record in self:
+            ret[record.type].append(record)
+        return ret
+
+    def split_by_date(self: RecordListType) -> dict[dt_date, RecordListType]:
+        ret = defaultdict(type(self))
+        for record in self:
+            ret[record.startDate.date()].append(record)
+        return ret
