@@ -61,3 +61,14 @@ class RecordList(UserList, List[Record]):
         for record in self:
             ret[record.startDate.date()].append(record)
         return ret
+
+    def get_average_sampling_period(self) -> float:
+        if len(self.hk_types) != 1 or len(self) <= 1:
+            raise NotImplementedError('Can only analyze sampling rate of singular-type RecordLists with'
+                                      'more than one value')
+        self.sort_by_date()
+        S, prev_t = 0, self[0].startDate
+        for record in self[1:]:
+            S += (record.startDate - prev_t).total_seconds()
+            prev_t = record.startDate
+        return S/(len(self)-1)
