@@ -68,6 +68,9 @@ class XMLLoader:
             for record in all_records:
                 yield file, XMLRecord.from_element(record)
 
+    def get_all_records(self) -> RecordList:
+        return RecordList(record for file, record in self.iter_all_records())
+
     def get_all_records_by_type(self, record_type: str) -> Union[RecordList, dict[Path, RecordList]]:
         type_records = defaultdict(RecordList)
         for file, all_records in self.get_iterator_by_tag('Record'):
