@@ -1,35 +1,26 @@
 from hktk.fileutil import is_xml, convert_to_pathlib
+from hktk.data_objects import Record, RecordList
 from lxml import etree as ET
 from typing import (Union, Optional, Iterator)
 from pathlib import Path
 from dataclasses import dataclass, field
 from datetime import datetime
+from collections import defaultdict
 
 
 @dataclass
-class XMLRecord:
-    type: str = field()
-    creationDate: str = field()
-    startDate: str = field()
-    endDate: str = field()
-    sourceName: str = field(repr=False)
-    sourceVersion: str = field(repr=False)
-    value: str = field(default=None)
-    unit: str = field(default=None, repr=False)
-    device: str = field(default=None, repr=False)
+class XMLRecord(Record):
+
     metadata: Optional[list[ET._Element]] = field(default=None, repr=False)
 
-    @property
-    def creation_datetime(self) -> datetime:
-        return XMLLoader.datetime_from_hk_string(self.creationDate)
-
-    @property
-    def start_datetime(self) -> datetime:
-        return XMLLoader.datetime_from_hk_string(self.startDate)
-
-    @property
-    def end_datetime(self) -> datetime:
-        return XMLLoader.datetime_from_hk_string(self.endDate)
+    @classmethod
+    def from_element(cls, record_element: ET._Element):
+        record_info = {k: v for k, v in record_element.attrib.items()}  # Convert to dict
+        record_info['creationDate'] = XMLLoader.datetime_from_hk_string(record_info.get('creationDate'))
+        record_info['startDate'] = XMLLoader.datetime_from_hk_string(record_info.get('startDate'))
+        record_info['endDate'] = XMLLoader.datetime_from_hk_string(record_info.get('endDate'))
+        record_info['metadata'] = record_element.findall('./')
+        return cls(**record_info)
 
 
 class XMLLoader:
@@ -75,13 +66,14 @@ class XMLLoader:
     def iter_all_records(self) -> Iterator[tuple[Path, XMLRecord]]:
         for file, all_records in self.get_iterator_by_tag('Record'):
             for record in all_records:
-                yield file, XMLRecord(**record.attrib, metadata=record.findall('./'))
+                yield file, XMLRecord.from_element(record)
 
-    def get_all_records_by_type(self, record_type: str) -> Union[list[XMLRecord], dict[Path, list[XMLRecord]]]:
-        type_records = dict()
+    def get_all_records_by_type(self, record_type: str) -> Union[RecordList, dict[Path, RecordList]]:
+        type_records = defaultdict(RecordList)
         for file, all_records in self.get_iterator_by_tag('Record'):
             records = filter(lambda record: record.get('type') == record_type, all_records)
-            type_records[file] = [XMLRecord(**record.attrib, metadata=record.findall('./')) for record in records]
+            for record in records:
+                type_records[file].append(XMLRecord.from_element(record))
         if len(self.files) == 1:
             return type_records[self.files[0]]
         return type_records
