@@ -19,6 +19,10 @@ class Record:
 
 class RecordList(UserList, List[Record]):
 
+    @property
+    def hk_types(self):
+        return set(record.type for record in self)
+
     def __getitem__(self, item: Union[int, slice]):
         if isinstance(item, int):
             return super().__getitem__(item)
