@@ -11,4 +11,5 @@ Using Python 3.9 and python library `lxml`
 conda create -n hktk python=3.9
 conda activate hktk
 pip install lxml
+pip install dash
 ```
