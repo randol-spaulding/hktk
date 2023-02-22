@@ -94,6 +94,15 @@ class XMLStringLoader:
     def __init__(self, xml_string: Union[str, bytes]):
         self.root = ET.fromstring(xml_string)
 
+    def get_tag_type_summary(self, tag_name: str) -> set[str]:
+        tag_types = set()
+        for record in self.get_iterator_by_tag(tag_name):
+            tag_types.add(record.get('type'))
+        return tag_types
+
+    def get_record_type_summary(self) -> set[str]:
+        return self.get_tag_type_summary(tag_name='Record')
+
     def get_iterator_by_tag(self, tag: str) -> Iterator[ET._Element]:
         return self.root.iterfind(tag)
 
