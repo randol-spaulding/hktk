@@ -85,3 +85,29 @@ class XMLLoader:
     @staticmethod
     def datetime_from_hk_string(datetime_string: str) -> datetime:
         return datetime.strptime(datetime_string, '%Y-%m-%d %H:%M:%S %z')
+
+
+class XMLStringLoader:
+
+    root: ET._Element
+
+    def __init__(self, xml_string: Union[str, bytes]):
+        self.root = ET.fromstring(xml_string)
+
+    def get_iterator_by_tag(self, tag: str) -> Iterator[ET._Element]:
+        return self.root.iterfind(tag)
+
+    def iter_all_records(self) -> Iterator[XMLRecord]:
+        for record in self.get_iterator_by_tag('Record'):
+            yield XMLRecord.from_element(record)
+
+    def get_all_records(self) -> RecordList:
+        return RecordList(self.iter_all_records())
+
+    def get_all_records_by_type(self, record_type: Union[str, list[str]]) -> RecordList:
+        type_records = RecordList()
+        record_type = [record_type] if not isinstance(record_type, list) else record_type
+        for record in self.get_iterator_by_tag('Record'):
+            if record.get('type') in record_type:
+                type_records.append(XMLRecord.from_element(record))
+        return type_records
