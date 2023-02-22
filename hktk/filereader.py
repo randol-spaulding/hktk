@@ -71,10 +71,11 @@ class XMLLoader:
     def get_all_records(self) -> RecordList:
         return RecordList(record for file, record in self.iter_all_records())
 
-    def get_all_records_by_type(self, record_type: str) -> Union[RecordList, dict[Path, RecordList]]:
+    def get_all_records_by_type(self, record_type: Union[str, list[str]]) -> Union[RecordList, dict[Path, RecordList]]:
         type_records = defaultdict(RecordList)
+        record_type = [record_type] if not isinstance(record_type, list) else record_type
         for file, all_records in self.get_iterator_by_tag('Record'):
-            records = filter(lambda record: record.get('type') == record_type, all_records)
+            records = filter(lambda rec: rec.get('type') in record_type, all_records)
             for record in records:
                 type_records[file].append(XMLRecord.from_element(record))
         if len(self.files) == 1:
