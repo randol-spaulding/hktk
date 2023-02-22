@@ -72,3 +72,44 @@ class RecordList(UserList, List[Record]):
             S += (record.startDate - prev_t).total_seconds()
             prev_t = record.startDate
         return S/(len(self)-1)
+
+
+class ArrayTypeRecordList(RecordList):
+
+    def get_array(self, dtype: DType = float) -> tuple[list[datetime], list[DType]]:
+        times, values = [], []
+        for record in self:
+            times.append(record.startDate)
+            values.append(dtype(record.value))
+        return times, values
+
+    def get_statistics(self, dtype: DType = float) -> tuple[float, float]:
+        self.sort_by_date()
+        prev_time, prev_value = None, None
+        S, S2, T = 0, 0, 0
+        for record in self:
+            time, value = record.startDate, dtype(record.value)
+            if prev_time is None:
+                prev_time, prev_value = time, value
+                continue
+            dt = (time - prev_time).total_seconds()
+            ds = (value + prev_value)/2
+            ds2 = (value ** 2 + prev_value ** 2) / 2
+            T += dt
+            S += dt * ds
+            S2 += dt * ds2
+        mean = S / T
+        variance = S2 / T - mean ** 2
+        return mean, variance
+
+
+class SleepStageRecordList(RecordList):
+    pass
+
+
+class FlagTypeRecordList:
+    pass
+
+
+class SummaryTypeRecordList:
+    pass
