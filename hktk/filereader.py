@@ -120,3 +120,7 @@ class XMLStringLoader:
             if record.get('type') in record_type:
                 type_records.append(XMLRecord.from_element(record))
         return type_records
+
+    def save(self, filename: str):
+        et = ET.ElementTree(self.root)
+        et.write(filename)
