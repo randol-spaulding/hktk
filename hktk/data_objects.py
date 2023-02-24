@@ -33,6 +33,16 @@ class RecordList(UserList, List[Record]):
     def hk_types(self):
         return set(record.type for record in self)
 
+    @property
+    def datetime_range(self) -> Union[None, tuple[datetime, datetime]]:
+        if len(self) == 0:
+            return None
+        default_tz = timezone(timedelta(0))
+        min_datetime, max_datetime = datetime.max.replace(tzinfo=default_tz), datetime.min.replace(tzinfo=default_tz)
+        for record in self:
+            min_datetime, max_datetime = min(record.startDate, min_datetime), max(record.endDate, max_datetime)
+        return min_datetime, max_datetime
+
     def __getitem__(self, item: Union[int, slice]):
         if isinstance(item, int):
             return super().__getitem__(item)
