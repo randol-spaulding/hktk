@@ -1,7 +1,10 @@
-from collections import UserList, defaultdict
+from hktk.typing import RecordListType, DType, SupportsContains
+from hktk.exceptions import MalformedHealthKitDataException
+from collections import UserList, defaultdict, OrderedDict
 from dataclasses import dataclass, field
-from typing import Union, List, Callable, Iterable, Optional, TypeVar, Literal
-from datetime import datetime
+from typing import Union, List, Callable, Iterable, Optional, TypeVar, Literal, Hashable
+from abc import ABC, abstractmethod
+from datetime import datetime, timedelta, timezone
 from datetime import date as dt_date
 
 
@@ -20,6 +23,9 @@ class Record:
     unit: str = field(default=None, repr=False)
     device: str = field(default=None, repr=False)
 
+    @property
+    def interval(self) -> timedelta:
+        return self.endDate - self.startDate
 
 class RecordList(UserList, List[Record]):
 
