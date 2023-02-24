@@ -114,6 +114,27 @@ class RecordList(UserList, List[Record]):
         return S/(len(self)-1)
 
 
+class AnalyticRecordList(RecordList, ABC):
+
+    def __init__(self, initlist=None):
+        super().__init__(initlist)
+        if len(self.hk_types) > 1:
+            raise ValueError(f'AnalyticRecordList classes and subclasses are for single-type records')
+
+    @property
+    def unit(self) -> str:
+        unit = set(record.unit for record in self)
+        if len(unit) == 1:
+            return unit.pop()
+        elif len(unit) > 1:
+            raise MalformedHealthKitDataException(f'Records of type {self.hk_types} has multiple units: {unit}')
+        return ''
+
+    @abstractmethod
+    def get_features(self) -> list[float]:
+        pass
+
+
 class ArrayTypeRecordList(RecordList):
 
     def get_array(self, dtype: DType = float) -> tuple[list[datetime], list[DType]]:
