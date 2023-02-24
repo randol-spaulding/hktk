@@ -135,6 +135,23 @@ class AnalyticRecordList(RecordList, ABC):
         pass
 
 
+@dataclass
+class StatisticSummary:
+    mean: float = field(default=None)
+    variance: float = field(default=None)
+    min: Union[int, float] = field(default=None)
+    max: Union[int, float] = field(default=None)
+    unit: str = field(default=None)
+
+    def to_vector(self) -> list[float]:
+        return [self.mean, self.variance, self.min, self.max]
+
+    @property
+    def std(self) -> float:
+        return self.variance ** 0.5 if self.variance is not None else None
+
+
+
 class ArrayTypeRecordList(RecordList):
 
     def get_array(self, dtype: DType = float) -> tuple[list[datetime], list[DType]]:
