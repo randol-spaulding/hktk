@@ -294,3 +294,43 @@ class CumulativeTypeRecordList(AnalyticRecordList):
 
     def get_features(self) -> list[float]:
         return [self.accumulate()]
+
+
+class _SummaryTypeRecordList(AnalyticRecordList, ABC):
+
+    latest_date: dt_date
+
+    def __init__(self, initlist=None, latest_date: dt_date = None):
+        super().__init__(initlist)
+        self.latest_date = datetime.now().date() if latest_date is None else latest_date
+
+    def split_by_date(self: RecordListType) -> dict[dt_date, RecordListType]:
+        self.sort_by_date()
+        ret = {}
+        date_split_to_fill = super().split_by_date()
+        for ref_date, records in date_split_to_fill.items():
+            ret[ref_date] = records
+            date = ref_date + timedelta(days=1)
+            while date not in date_split_to_fill and date <= self.latest_date:
+                ret[date] = records
+                date += timedelta(days=1)
+        return ret
+
+    @abstractmethod
+    def get_features(self) -> list[float]:
+        pass
+
+
+@register
+class SummaryArrayTypeRecordList(ArrayTypeRecordList, _SummaryTypeRecordList):
+    pass
+
+
+@register
+class SummaryCategoricalTypeRecordList(CategoricalTypeRecordList, _SummaryTypeRecordList):
+    pass
+
+
+@register
+class SummaryCumulativeTypeRecordList(CumulativeTypeRecordList, _SummaryTypeRecordList):
+    pass
