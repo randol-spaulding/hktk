@@ -212,13 +212,47 @@ class CategoricalTypeRecordList(AnalyticRecordList):
         return self.get_counts()
 
 
-class SleepStageRecordList(RecordList):
-    pass
+@register
+class SleepStageRecordList(CategoricalTypeRecordList):
 
+    sleep_stage_mapping: dict[str, int] = {'HKCategoryValueSleepAnalysisInBed': -1,
+                                           'HKCategoryValueSleepAnalysisAwake': 0,
+                                           'HKCategoryValueSleepAnalysisAsleepREM': 1,
+                                           'HKCategoryValueSleepAnalysisAsleepCore': 2,
+                                           'HKCategoryValueSleepAnalysisAsleepDeep': 3}
 
-class FlagTypeRecordList:
-    pass
+    def __init__(self, initlist=None):
+        super().__init__(initlist=initlist, categories=self.sleep_stage_mapping.keys())
 
+    def parse_sleep_blocks(self) -> dict[int, tuple[datetime, datetime, list[Record]]]:
+        blocks = {}
+        max_block_id = 0
+        for record in self:
+            if self.sleep_stage_mapping[record.value] == -1:
+                continue
+            start, end = record.startDate, record.endDate
+            is_in_block = False
+            for block_id, (int_start, int_end, stage_arr) in blocks.items():
+                if end == int_start or start == int_end:
+                    if end == int_start:
+                        blocks[block_id] = (start, int_end, [record] + stage_arr)
+                    else:
+                        blocks[block_id] = (int_start, end, stage_arr + [record])
+                    is_in_block = True
+                    break
+            if not is_in_block:
+                blocks[max_block_id] = (start, end, [record])
+                max_block_id += 1
+        return blocks
 
-class SummaryTypeRecordList:
-    pass
+    def split_by_sleep_blocks(self) -> list['SleepStageRecordList']:
+        ret = []
+        for block_id, (int_start, int_end, stage_arr) in self.parse_sleep_blocks().items():
+            ret.append(SleepStageRecordList(stage_arr))
+        return ret
+
+    def get_features(self) -> list[float]:
+        start, end = self.datetime_range
+        duration_in_hours = (end - start).total_seconds() / 3600
+        return self.get_counts() + [duration_in_hours]
+
