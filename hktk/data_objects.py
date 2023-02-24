@@ -90,6 +90,12 @@ class RecordList(UserList, List[Record]):
             ret[record.startDate.date()].append(record)
         return ret
 
+    def split_by_value(self: RecordListType) -> dict[Union[str, None], RecordListType]:
+        ret = defaultdict(type(self))
+        for record in self:
+            ret[record.value].append(record)
+        return ret
+
     def get_average_sampling_period(self) -> float:
         if len(self.hk_types) != 1 or len(self) <= 1:
             raise NotImplementedError('Can only analyze sampling rate of singular-type RecordLists with'
