@@ -7,9 +7,13 @@ from abc import ABC, abstractmethod
 from datetime import datetime, timedelta, timezone
 from datetime import date as dt_date
 
+record_lists = defaultdict(lambda: None)
 
-DType = TypeVar('DType')
-RecordListType = TypeVar('RecordListType')
+
+def register(record_list_type):
+    record_lists[record_list_type.__name__] = record_list_type
+    return record_list_type
+
 
 @dataclass
 class Record:
@@ -27,6 +31,8 @@ class Record:
     def interval(self) -> timedelta:
         return self.endDate - self.startDate
 
+
+@register
 class RecordList(UserList, List[Record]):
 
     @property
