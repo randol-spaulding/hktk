@@ -256,3 +256,31 @@ class SleepStageRecordList(CategoricalTypeRecordList):
         duration_in_hours = (end - start).total_seconds() / 3600
         return self.get_counts() + [duration_in_hours]
 
+
+@register
+class EventTypeRecordList(AnalyticRecordList):
+
+    latest_date: dt_date
+
+    def __init__(self, initlist=None, latest_date: dt_date = None):
+        super().__init__(initlist)
+        self.latest_date = datetime.now().date() if latest_date is None else latest_date
+
+    def split_by_date(self: RecordListType) -> dict[dt_date, RecordListType]:
+        self.sort_by_date()
+        ret = {}
+        date_split_to_fill = super().split_by_date()
+        for ref_date, records in date_split_to_fill.items():
+            ret[ref_date] = records
+            date = ref_date + timedelta(days=1)
+            while date not in date_split_to_fill and date <= self.latest_date:
+                ret[date] = EventTypeRecordList()
+                date += timedelta(days=1)
+        return ret
+
+    def get_features(self) -> list[float]:
+        total_time = sum((record.interval for record in self), start=timedelta(0))
+        feature = total_time.total_seconds()/len(self) if len(self) > 0 else 0
+        if feature == 0 and len(self) != 0:  # Want representation if the event was present, but was instantaneous
+            feature = len(self)
+        return [feature]
