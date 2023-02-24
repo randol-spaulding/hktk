@@ -192,6 +192,26 @@ class ArrayTypeRecordList(AnalyticRecordList):
         return self.get_statistics().to_vector()
 
 
+@register
+class CategoricalTypeRecordList(AnalyticRecordList):
+
+    categories: set
+
+    def __init__(self, initlist=None, categories: Optional[Iterable] = None):
+        super().__init__(initlist)
+        categories = set(record.value for record in self) if categories is None else set(categories)
+        self.categories = set(sorted(categories))
+
+    def get_counts(self) -> list[int]:
+        count = defaultdict(int)
+        for record in self:
+            count[record.value] += record.interval.total_seconds()
+        return [count.get(category, 0) for category in self.categories]
+
+    def get_features(self) -> list[float]:
+        return self.get_counts()
+
+
 class SleepStageRecordList(RecordList):
     pass
 
