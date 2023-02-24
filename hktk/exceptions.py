@@ -1,0 +1,2 @@
+class MalformedHealthKitDataException(Exception):
+    pass
