@@ -151,8 +151,8 @@ class StatisticSummary:
         return self.variance ** 0.5 if self.variance is not None else None
 
 
-
-class ArrayTypeRecordList(RecordList):
+@register
+class ArrayTypeRecordList(AnalyticRecordList):
 
     def get_array(self, dtype: DType = float) -> tuple[list[datetime], list[DType]]:
         times, values = [], []
@@ -187,6 +187,9 @@ class ArrayTypeRecordList(RecordList):
         mean = S / T
         variance = S2 / T - mean ** 2
         return StatisticSummary(mean=mean, variance=variance, min=min_value, max=max_value, unit=self.unit)
+
+    def get_features(self) -> list[float]:
+        return self.get_statistics().to_vector()
 
 
 class SleepStageRecordList(RecordList):
