@@ -284,3 +284,13 @@ class EventTypeRecordList(AnalyticRecordList):
         if feature == 0 and len(self) != 0:  # Want representation if the event was present, but was instantaneous
             feature = len(self)
         return [feature]
+
+
+@register
+class CumulativeTypeRecordList(AnalyticRecordList):
+
+    def accumulate(self, dtype: DType = float) -> DType:
+        return sum(dtype(record.value) for record in self)
+
+    def get_features(self) -> list[float]:
+        return [self.accumulate()]
