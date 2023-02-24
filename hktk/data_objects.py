@@ -161,12 +161,19 @@ class ArrayTypeRecordList(RecordList):
             values.append(dtype(record.value))
         return times, values
 
-    def get_statistics(self, dtype: DType = float) -> tuple[float, float]:
+    def get_statistics(self, dtype: DType = float) -> StatisticSummary:
+        if len(self) == 0:
+            return StatisticSummary()
+        elif len(self) == 1:
+            value = dtype(self[0].value)
+            return StatisticSummary(mean=value, variance=0, min=value, max=value, unit=self.unit)
         self.sort_by_date()
         prev_time, prev_value = None, None
         S, S2, T = 0, 0, 0
+        min_value, max_value = float('inf'), -float('inf')
         for record in self:
             time, value = record.startDate, dtype(record.value)
+            min_value, max_value = min(min_value, value), max(max_value, value)
             if prev_time is None:
                 prev_time, prev_value = time, value
                 continue
@@ -176,9 +183,10 @@ class ArrayTypeRecordList(RecordList):
             T += dt
             S += dt * ds
             S2 += dt * ds2
+        T = len(self) if T == 0 else T  # in weird case where all samples happen simultaneously
         mean = S / T
         variance = S2 / T - mean ** 2
-        return mean, variance
+        return StatisticSummary(mean=mean, variance=variance, min=min_value, max=max_value, unit=self.unit)
 
 
 class SleepStageRecordList(RecordList):
