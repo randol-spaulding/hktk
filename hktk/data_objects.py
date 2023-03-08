@@ -6,8 +6,20 @@ from typing import Union, List, Callable, Iterable, Optional, TypeVar, Literal, 
 from abc import ABC, abstractmethod
 from datetime import datetime, timedelta, timezone
 from datetime import date as dt_date
+import importlib
+from functools import lru_cache
 
 record_lists = defaultdict(lambda: None)
+
+
+@lru_cache(maxsize=1)
+def get_record_types():
+    return importlib.import_module('hktk.meta').RecordTypes
+
+
+def infer_record_list_type(hk_type: str):
+    record_types = get_record_types()
+    return record_types[hk_type]
 
 
 def register(record_list_type):
@@ -85,9 +97,12 @@ class RecordList(UserList, List[Record]):
         return self.filter(lambda record: record.type in record_types)
 
     def split_by_types(self: RecordListType) -> dict[str, RecordListType]:
-        ret = defaultdict(type(self))
+        ret = {}
         for record in self:
-            ret[record.type].append(record)
+            cls_type = infer_record_list_type(record.type).analytic_cls
+            if isinstance(cls_type, InvalidTypeRecordList):
+                continue
+            ret.setdefault(record.type, cls_type()).append(record)
         return ret
 
     def split_by_date(self: RecordListType) -> dict[dt_date, RecordListType]:
@@ -129,6 +144,9 @@ class AnalyticRecordList(RecordList, ABC):
         elif len(unit) > 1:
             raise MalformedHealthKitDataException(f'Records of type {self.hk_types} has multiple units: {unit}')
         return ''
+
+    def split_by_types(self):
+        raise AttributeError('AnalyticRecordList classes and subclasses are for single-type records')
 
     @abstractmethod
     def get_features(self) -> list[float]:
@@ -334,3 +352,10 @@ class SummaryCategoricalTypeRecordList(CategoricalTypeRecordList, _SummaryTypeRe
 @register
 class SummaryCumulativeTypeRecordList(CumulativeTypeRecordList, _SummaryTypeRecordList):
     pass
+
+
+@register
+class InvalidTypeRecordList(AnalyticRecordList):
+
+    def get_features(self) -> list[float]:
+        raise NotImplementedError('Attempted to get features of InvalidRecordType')
