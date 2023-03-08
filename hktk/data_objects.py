@@ -91,10 +91,11 @@ class RecordList(UserList, List[Record]):
                 filtered_list.append(item)
         return filtered_list
 
-    def get_type_subset(self: RecordListType, record_types: Union[str, SupportsContains]) -> RecordListType:
-        if isinstance(record_types, str):
-            record_types = [record_types]
-        return self.filter(lambda record: record.type in record_types)
+    def get_type_subset(self: RecordListType, record_type: Union[str, SupportsContains]) -> RecordListType:
+        if isinstance(record_type, str):
+            cls_type = infer_record_list_type(record_type).analytic_cls
+            return cls_type(self.filter(lambda record: record.type in record_type))
+        return self.filter(lambda record: record.type in record_type)
 
     def split_by_types(self: RecordListType) -> dict[str, RecordListType]:
         ret = {}
