@@ -48,7 +48,7 @@ class Record:
 class RecordList(UserList, List[Record]):
 
     @property
-    def hk_types(self):
+    def hk_types(self) -> set[str]:
         return set(record.type for record in self)
 
     @property
