@@ -167,6 +167,10 @@ class AnalyticRecordList(RecordList, ABC):
     def get_features(self) -> list[float]:
         pass
 
+    @abstractmethod
+    def get_feature_summary(self) -> dict[str, float]:
+        pass
+
 
 @dataclass
 class StatisticSummary:
@@ -177,12 +181,14 @@ class StatisticSummary:
     unit: str = field(default=None)
 
     def to_vector(self) -> list[float]:
-        return [self.mean, self.variance, self.min, self.max]
+        return [self.mean, self.std, self.min, self.max]
 
     @property
     def std(self) -> float:
         return self.variance ** 0.5 if self.variance is not None else None
 
+    def to_dict(self) -> dict[str, float]:
+        return {'mean': self.mean, 'std': self.std, 'min': self.min, 'max': self.max}
 
 @register
 class ArrayTypeRecordList(AnalyticRecordList):
@@ -224,6 +230,9 @@ class ArrayTypeRecordList(AnalyticRecordList):
     def get_features(self) -> list[float]:
         return self.get_statistics().to_vector()
 
+    def get_feature_summary(self) -> dict[str, float]:
+        return self.get_statistics().to_dict()
+
 
 @register
 class CategoricalTypeRecordList(AnalyticRecordList):
@@ -235,13 +244,16 @@ class CategoricalTypeRecordList(AnalyticRecordList):
         categories = set(record.value for record in self) if categories is None else set(categories)
         self.categories = set(sorted(categories))
 
-    def get_counts(self) -> list[int]:
+    def get_counts(self) -> dict[str, int]:
         count = defaultdict(int)
         for record in self:
             count[record.value] += record.interval.total_seconds()
-        return [count.get(category, 0) for category in self.categories]
+        return {category: count.get(category, 0) for category in self.categories}
 
     def get_features(self) -> list[float]:
+        return list(self.get_counts().values())
+
+    def get_feature_summary(self) -> dict[str, float]:
         return self.get_counts()
 
 
@@ -287,7 +299,13 @@ class SleepStageRecordList(CategoricalTypeRecordList):
     def get_features(self) -> list[float]:
         start, end = self.datetime_range
         duration_in_hours = (end - start).total_seconds() / 3600
-        return self.get_counts() + [duration_in_hours]
+        return list(self.get_counts().values()) + [duration_in_hours]
+
+    def get_feature_summary(self) -> dict[str, float]:
+        start, end = self.datetime_range
+        summary = self.get_counts()
+        summary['duration'] = (end - start).total_seconds() / 3600
+        return summary
 
 
 @register
@@ -318,6 +336,9 @@ class EventTypeRecordList(AnalyticRecordList):
             feature = len(self)
         return [feature]
 
+    def get_feature_summary(self) -> dict[str, float]:
+        return {'total_time': self.get_features()[0]}
+
 
 @register
 class CumulativeTypeRecordList(AnalyticRecordList):
@@ -327,6 +348,9 @@ class CumulativeTypeRecordList(AnalyticRecordList):
 
     def get_features(self) -> list[float]:
         return [self.accumulate()]
+
+    def get_feature_summary(self) -> dict[str, float]:
+        return {'count': self.get_features()[0]}
 
 
 class _SummaryTypeRecordList(AnalyticRecordList, ABC):
