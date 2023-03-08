@@ -117,6 +117,12 @@ class RecordList(UserList, List[Record]):
             ret[record.value].append(record)
         return ret
 
+    def get_date_summary(self) -> dict[str, set[dt_date]]:
+        date_summary = defaultdict(set)
+        for record in self:
+            date_summary[record.type].add(record.startDate.date())
+        return date_summary
+
     def get_average_sampling_period(self) -> float:
         if len(self.hk_types) != 1 or len(self) <= 1:
             raise NotImplementedError('Can only analyze sampling rate of singular-type RecordLists with'
