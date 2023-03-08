@@ -82,6 +82,18 @@ class XMLLoader:
             return type_records[self.files[0]]
         return type_records
 
+    def get_all_records_in_time_range(self, start_date: datetime,
+                                      end_date: datetime) -> Union[RecordList, dict[Path, RecordList]]:
+        date_records = defaultdict(RecordList)
+        for file, all_records in self.get_iterator_by_tag('Record'):
+            all_records = map(XMLRecord.from_element, all_records)
+            all_records = filter(lambda record: start_date <= record.endDate and end_date >= record.startDate,
+                                 all_records)
+            date_records[file] = RecordList(list(all_records))
+        if len(self.files) == 1:
+            return date_records[self.files[0]]
+        return date_records
+
     @staticmethod
     def datetime_from_hk_string(datetime_string: str) -> datetime:
         return datetime.strptime(datetime_string, '%Y-%m-%d %H:%M:%S %z')
@@ -120,6 +132,11 @@ class XMLStringLoader:
             if record.get('type') in record_type:
                 type_records.append(XMLRecord.from_element(record))
         return type_records
+
+    def get_all_records_in_time_range(self, start_date: datetime, end_date: datetime) -> RecordList:
+        records = map(XMLRecord.from_element, self.get_iterator_by_tag('Record'))
+        records = filter(lambda record: start_date <= record.endDate and end_date >= record.startDate, records)
+        return RecordList(list(records))
 
     def save(self, filename: str):
         et = ET.ElementTree(self.root)
