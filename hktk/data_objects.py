@@ -142,11 +142,15 @@ class AnalyticRecordList(RecordList, ABC):
         super().__init__(initlist)
         if len(self.hk_types) > 1:
             raise ValueError(f'AnalyticRecordList classes and subclasses are for single-type records')
-        self.record_type = infer_record_list_type(self.hk_type)
 
     @property
-    def hk_type(self) -> str:
-        return list(self.hk_types)[0]
+    def hk_type(self) -> str | None:
+        hk_types = self.hk_types
+        return list(hk_types)[0] if len(hk_types) > 0 else None
+
+    @property
+    def record_type(self):
+        return infer_record_list_type(self.hk_type)
 
     @property
     def hk_simplified_name(self) -> str:
