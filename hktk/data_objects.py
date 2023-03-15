@@ -374,13 +374,12 @@ class EventTypeRecordList(AnalyticRecordList):
 
     def get_features(self) -> list[float]:
         total_time = sum((record.interval for record in self), start=timedelta(0))
-        feature = total_time.total_seconds()/len(self) if len(self) > 0 else 0
-        if feature == 0 and len(self) != 0:  # Want representation if the event was present, but was instantaneous
-            feature = len(self)
-        return [feature]
+        total_time = total_time.total_seconds()/len(self) if len(self) > 0 else 0
+        return [total_time, len(self)]
 
     def get_feature_summary(self) -> dict[str, float]:
-        return {'total_time': self.get_features()[0]}
+        total_time, num_events = self.get_features()
+        return {'total_seconds': total_time, 'num_events': num_events}
 
 
 @register
