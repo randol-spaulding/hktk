@@ -8,6 +8,7 @@ from datetime import datetime, timedelta, timezone
 from datetime import date as dt_date
 import importlib
 from functools import lru_cache
+import numpy as np
 
 record_lists = defaultdict(lambda: None)
 
@@ -224,28 +225,36 @@ class ArrayTypeRecordList(AnalyticRecordList):
         return times, values
 
     def get_statistics(self, dtype: DType = float) -> StatisticSummary:
-        if len(self) == 0:
+        num_records = len(self)
+        if num_records == 0:
             return StatisticSummary()
-        elif len(self) == 1:
+        elif num_records == 1:
             value = dtype(self[0].value)
-            return StatisticSummary(mean=value, variance=0, min=value, max=value, unit=self.unit)
+            return StatisticSummary(mean=value, variance=None, min=value, max=value, unit=self.unit)
         self.sort_by_date()
-        prev_time, prev_value = None, None
-        S, S2, T = 0, 0, 0
+        prev_time = self[0].startDate
+        vals, dts = [[dtype(self[0].value)]], []
         min_value, max_value = float('inf'), -float('inf')
-        for record in self:
+        for record_num, record in enumerate(self[1:]):
             time, value = record.startDate, dtype(record.value)
             min_value, max_value = min(min_value, value), max(max_value, value)
-            if prev_time is None:
-                prev_time, prev_value = time, value
+            if time == prev_time:
+                vals[-1].append(value)
                 continue
+            vals.append([value])
             dt = (time - prev_time).total_seconds()
-            ds = (value + prev_value)/2
-            ds2 = (value ** 2 + prev_value ** 2) / 2
-            T += dt
-            S += dt * ds
-            S2 += dt * ds2
-        T = len(self) if T == 0 else T  # in weird case where all samples happen simultaneously
+            dts.append(dt)
+            prev_time = time
+        if len(dts) == 0:  # edge case where all samples happen simultaneously
+            mean = float(np.mean(vals))
+            variance = float(np.var(vals))
+            return StatisticSummary(mean=mean, variance=variance, min=min_value, max=max_value, unit=self.unit)
+        vals = [sum(time_vals)/len(time_vals) for time_vals in vals]
+        S, S2, T = 0, 0, 0
+        for i in range(len(dts)):
+            T += dts[i]
+            S += dts[i] * (vals[i+1] + vals[i])/2
+            S2 = dts[i] * (vals[i+1]**2 + vals[i]**2)/2
         mean = S / T
         variance = S2 / T - mean ** 2
         return StatisticSummary(mean=mean, variance=variance, min=min_value, max=max_value, unit=self.unit)
