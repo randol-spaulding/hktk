@@ -51,7 +51,6 @@ class RecordList(UserList, List[Record]):
     def hk_types(self) -> set[str]:
         return set(record.type for record in self)
 
-    @property
     def datetime_range(self) -> Union[None, tuple[datetime, datetime]]:
         if len(self) == 0:
             return None
