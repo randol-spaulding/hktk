@@ -287,6 +287,12 @@ class SleepStageRecordList(CategoricalTypeRecordList):
                                            'HKCategoryValueSleepAnalysisAsleepCore': 2,
                                            'HKCategoryValueSleepAnalysisAsleepDeep': 3}
 
+    sleep_stage_name_mp: dict[str, str] = {'HKCategoryValueSleepAnalysisInBed': 'InBed',
+                                           'HKCategoryValueSleepAnalysisAwake': 'Awake',
+                                           'HKCategoryValueSleepAnalysisAsleepREM': 'REM',
+                                           'HKCategoryValueSleepAnalysisAsleepCore': 'Core',
+                                           'HKCategoryValueSleepAnalysisAsleepDeep': 'Deep'}
+
     def __init__(self, initlist=None):
         super().__init__(initlist=initlist, categories=self.sleep_stage_mapping.keys())
 
@@ -318,14 +324,19 @@ class SleepStageRecordList(CategoricalTypeRecordList):
         return ret
 
     def get_features(self) -> list[float]:
-        start, end = self.datetime_range
+        start, end = self.datetime_range()
         duration_in_hours = (end - start).total_seconds() / 3600
         return list(self.get_counts().values()) + [duration_in_hours]
 
     def get_feature_summary(self) -> dict[str, float]:
-        start, end = self.datetime_range
-        summary = self.get_counts()
-        summary['duration'] = (end - start).total_seconds() / 3600
+        start, end = self.datetime_range()
+        duration = (end - start).total_seconds()
+        summary = {}
+        for key, value in self.get_counts().items():
+            k = self.sleep_stage_name_mp[key]
+            summary[f'{k}_duration'] = value / 3600
+            summary[f'{k}_percent'] = value / duration
+        summary['duration'] = duration / 3600
         return summary
 
 
