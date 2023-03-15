@@ -65,9 +65,14 @@ class RecordList(UserList, List[Record]):
         if isinstance(item, int):
             return super().__getitem__(item)
         elif isinstance(item, slice):
-            if isinstance(item.start, datetime) and isinstance(item.stop, datetime):
+            if isinstance(item.start, datetime) or isinstance(item.stop, datetime):
+                start, stop = item.start, item.stop
+                if not (isinstance(start, datetime) and isinstance(stop, datetime)):
+                    min_datetime, max_datetime = self.datetime_range()
+                    start = start if isinstance(start, datetime) else min_datetime
+                    stop = stop if isinstance(stop, datetime) else max_datetime
                 def filter_fn(record: Record) -> bool:
-                    return any(item.start <= dt <= item.stop for dt in [record.startDate, record.endDate, record.creationDate])
+                    return start <= record.startDate and record.endDate <= stop
                 return self.filter(filter_fn)
             else:
                 return super().__getitem__(item)
