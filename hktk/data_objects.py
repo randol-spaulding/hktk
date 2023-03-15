@@ -209,7 +209,9 @@ class StatisticSummary:
         return self.variance ** 0.5 if self.variance is not None else None
 
     def to_dict(self) -> dict[str, float]:
-        return {'mean': self.mean, 'std': self.std, 'min': self.min, 'max': self.max}
+        ret = {'mean': self.mean, 'std': self.std, 'min': self.min, 'max': self.max}
+        return {f'{k}_{self.unit}': v for k, v in ret.items()}
+
 
 @register
 class ArrayTypeRecordList(AnalyticRecordList):
