@@ -82,6 +82,18 @@ class RecordList(UserList, List[Record]):
     def sort_by_date(self, date_type: Literal['startDate', 'endDate', 'creationDate'] = 'startDate'):
         self.sort(key=lambda record: getattr(record, date_type))
 
+    def get_subset_by_date_range(self, start: datetime, end: datetime, already_sorted: bool = False) -> 'RecordList':
+        if already_sorted:
+            ret = type(self)()
+            for record in self:
+                if record.startDate < start:
+                    continue
+                if record.startDate > end:
+                    break
+                ret.append(record)
+            return ret
+        return self[start:end]
+
     def group_by(self: RecordListType, grouping_func: Callable[[Record], Hashable]) -> dict[Hashable, RecordListType]:
         groups = defaultdict(type(self))
         for record in self:
