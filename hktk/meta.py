@@ -37,7 +37,7 @@ class RecordTypes(Enum, metaclass=RecordTypesMeta):
     HKQuantityTypeIdentifierAppleExerciseTime = CumulativeRecordType('AppleExerciseTime')
     HKQuantityTypeIdentifierAppleStandTime = CumulativeRecordType('AppleStandTime')
     HKQuantityTypeIdentifierFlightsClimbed = CumulativeRecordType('FlightsClimbed')
-    HKQuantityTypeIdentifierDietaryCaffeine = CumulativeRecordType('DietaryCaffeine')
+    HKQuantityTypeIdentifierDietaryCaffeine = RecordType('DietaryCaffeine', data_objects.CaffeineIntakeRecordList)
     HKQuantityTypeIdentifierNumberOfAlcoholicBeverages = CumulativeRecordType('NumberOfAlcoholicBeverages')
     HKQuantityTypeIdentifierNumberOfTimesFallen = CumulativeRecordType('NumberOfTimesFallen')
 

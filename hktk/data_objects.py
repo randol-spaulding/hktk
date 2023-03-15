@@ -392,7 +392,29 @@ class CumulativeTypeRecordList(AnalyticRecordList):
         return [self.accumulate()]
 
     def get_feature_summary(self) -> dict[str, float]:
-        return {'count': self.get_features()[0]}
+        return {self.unit: self.get_features()[0]}
+
+
+@register
+class CaffeineIntakeRecordList(CumulativeTypeRecordList):
+
+    caffeine_half_life: float = 4.0
+
+    def get_level_at_midnight(self):
+        level = 0.0
+        _, end = self.datetime_range()
+        midnight = datetime.combine((end + timedelta(days=1)).date(), datetime.min.time())
+        midnight = midnight.replace(tzinfo=end.tzinfo)
+        for record in self:
+            hours_to_midnight = (midnight - record.startDate).total_seconds() / 3600
+            level += float(record.value) * 2 ** (-hours_to_midnight / self.caffeine_half_life)
+        return level
+
+    def get_features(self) -> list[float]:
+        return [self.accumulate(), self.get_level_at_midnight()]
+
+    def get_feature_summary(self) -> dict[str, float]:
+        return super().get_feature_summary() | {f'{self.unit}_at_midnight': self.get_level_at_midnight()}
 
 
 class _SummaryTypeRecordList(AnalyticRecordList, ABC):
