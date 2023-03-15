@@ -117,7 +117,7 @@ class RecordList(UserList, List[Record]):
         ret = {}
         for record in self:
             cls_type = infer_record_list_type(record.type).analytic_cls
-            if isinstance(cls_type, InvalidTypeRecordList):
+            if cls_type is InvalidTypeRecordList:
                 continue
             ret.setdefault(record.type, cls_type()).append(record)
         return ret
